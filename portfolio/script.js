@@ -7,81 +7,87 @@ function goBack() {
   }
 }
 
-// Sample portfolio data (replace with real data)
-const portfolioData = [
-  // Add portfolio items here when ready
-  // {
-  //   id: 1,
-  //   title: "Графическая татуировка",
-  //   description: "Минималистичный дизайн с четкими линиями",
-  //   image: "../assets/portfolio/1.jpg",
-  //   category: "graphic"
-  // }
+// Photo data from the photo folder
+const photos = [
+  'photo_2025-09-12_02-17-28.jpg',
+  'photo_2025-09-12_02-17-22.jpg',
+  'photo_2025-09-12_02-17-18.jpg',
+  'photo_2025-09-12_02-17-13.jpg',
+  'photo_2025-09-12_02-17-10.jpg',
+  'photo_2025-09-12_02-17-01.jpg',
+  'photo_2025-09-12_02-16-57.jpg',
+  'photo_2025-09-12_02-16-54.jpg',
+  'photo_2025-09-12_02-16-51.jpg',
+  'photo_2025-09-12_02-16-48.jpg',
+  'photo_2025-09-12_02-16-45.jpg',
+  'photo_2025-09-12_02-16-36.jpg',
+  'photo_2025-09-12_02-16-33.jpg',
+  'photo_2025-09-12_02-16-29.jpg',
+  'photo_2025-09-12_02-16-27.jpg',
+  'photo_2025-09-12_02-16-23.jpg',
+  'photo_2025-09-12_02-16-18.jpg',
+  'photo_2025-09-12_02-16-04.jpg',
+  'photo_2025-09-12_02-16-01.jpg',
+  'photo_2025-09-12_02-15-53.jpg',
+  'photo_2025-09-12_02-15-47.jpg',
+  'photo_2025-09-12_02-15-44.jpg',
+  'photo_2025-09-12_02-15-40.jpg',
+  'photo_2025-09-12_02-15-37.jpg',
+  'photo_2025-09-12_02-15-31.jpg',
+  'photo_2025-09-12_02-15-27.jpg',
+  'photo_2025-09-12_02-15-24.jpg',
+  'photo_2025-09-12_02-15-21.jpg',
+  'photo_2025-09-12_02-15-17.jpg',
+  'photo_2025-09-12_02-15-11.jpg'
 ];
 
-function loadPortfolio() {
+function loadPortfolioGrid() {
   const grid = document.getElementById('portfolioGrid');
-  const emptyState = document.getElementById('emptyState');
   
-  if (portfolioData.length === 0) {
-    grid.style.display = 'none';
-    emptyState.style.display = 'block';
-    return;
-  }
-  
-  grid.style.display = 'grid';
-  emptyState.style.display = 'none';
-  
-  grid.innerHTML = portfolioData.map(item => `
-    <div class="portfolio-item" onclick="openLightbox(${item.id})">
-      <img src="${item.image}" alt="${item.title}" loading="lazy">
-      <div class="portfolio-item-overlay">
-        <h4 class="portfolio-item-title">${item.title}</h4>
-        <p class="portfolio-item-description">${item.description}</p>
-      </div>
+  grid.innerHTML = photos.map((photo, index) => `
+    <div class="portfolio-item" onclick="openViewer(${index})">
+      <img src="./photo/${photo}" alt="Татуировка ${index + 1}" loading="lazy">
     </div>
   `).join('');
 }
 
-function openLightbox(itemId) {
-  const item = portfolioData.find(p => p.id === itemId);
-  if (!item) return;
+function openViewer(startIndex) {
+  const viewer = document.getElementById('fullscreenViewer');
+  const container = document.getElementById('photoContainer');
   
-  const lightbox = document.getElementById('lightbox');
-  const image = document.getElementById('lightboxImage');
-  const title = document.getElementById('lightboxTitle');
-  const description = document.getElementById('lightboxDescription');
+  // Create all photo slides
+  container.innerHTML = photos.map((photo, index) => `
+    <div class="photo-slide">
+      <img src="./photo/${photo}" alt="Татуировка ${index + 1}" loading="lazy">
+    </div>
+  `).join('');
   
-  image.src = item.image;
-  title.textContent = item.title;
-  description.textContent = item.description;
-  
-  lightbox.classList.add('active');
+  // Show viewer
+  viewer.classList.add('active');
   document.body.style.overflow = 'hidden';
+  
+  // Scroll to the clicked photo
+  const targetSlide = container.children[startIndex];
+  if (targetSlide) {
+    targetSlide.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
-function closeLightbox() {
-  const lightbox = document.getElementById('lightbox');
-  lightbox.classList.remove('active');
+function closeViewer() {
+  const viewer = document.getElementById('fullscreenViewer');
+  viewer.classList.remove('active');
   document.body.style.overflow = '';
 }
 
-// Close lightbox on escape key
+// Close viewer on escape key
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    closeLightbox();
-  }
-});
-
-// Close lightbox on background click
-document.getElementById('lightbox').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeLightbox();
+    closeViewer();
   }
 });
 
 // Initialize portfolio on page load
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Portfolio page loaded');
-  loadPortfolio();
+  loadPortfolioGrid();
 });

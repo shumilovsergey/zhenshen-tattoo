@@ -17,25 +17,17 @@
     
     <section class="content-section">
       <div class="portfolio-grid" id="portfolioGrid">
-        <!-- Portfolio items will be loaded here -->
-      </div>
-      
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">🎨</div>
-        <h3>Портфолио готовится</h3>
-        <p>Скоро здесь появятся работы мастера</p>
+        <!-- Instagram-style grid of photos -->
       </div>
     </section>
     
-    <!-- Lightbox for viewing images -->
-    <div class="lightbox" id="lightbox">
-      <div class="lightbox-content">
-        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-        <img class="lightbox-image" id="lightboxImage" alt="Татуировка">
-        <div class="lightbox-info">
-          <h3 class="lightbox-title" id="lightboxTitle"></h3>
-          <p class="lightbox-description" id="lightboxDescription"></p>
-        </div>
+    <!-- Full-screen photo viewer -->
+    <div class="fullscreen-viewer" id="fullscreenViewer">
+      <div class="viewer-header">
+        <button class="close-btn" onclick="closeViewer()">&times;</button>
+      </div>
+      <div class="photo-container" id="photoContainer">
+        <!-- Photos will be loaded here for vertical scrolling -->
       </div>
     </div>
     
