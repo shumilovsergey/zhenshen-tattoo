@@ -40,7 +40,7 @@
     /* Hero */
     .hero{
       position:relative;
-      aspect-ratio: 9 / 12;          /* tall mobile crop */
+      /* aspect-ratio: 9 / 12;        */
       max-height:60vh;
       min-height:50vh;
       overflow:hidden;
@@ -49,9 +49,9 @@
       background-position: center center;
       border-bottom:1px solid var(--ring-weak);
     }
-    @supports not (aspect-ratio: 9 / 12){
+    /* @supports not (aspect-ratio: 9 / 12){
       .hero{height:60vh;}
-    }
+    } */
     .hero::after{
       /* subtle top/bottom vignette to match the photo look */
       content:"";
