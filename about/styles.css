@@ -1,0 +1,125 @@
+/* About page specific styles */
+.about-page {
+  background: var(--bg);
+  padding: 0;
+}
+
+.about-content > div {
+  margin-bottom: 32px;
+}
+
+.about-content > div:last-child {
+  margin-bottom: 0;
+}
+
+.about-content h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  letter-spacing: 0.5px;
+}
+
+.about-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 16px 0;
+}
+
+.about-content p:last-child {
+  margin-bottom: 0;
+}
+
+.style-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0 0;
+}
+
+.style-list li {
+  font-size: 16px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.style-list li:before {
+  content: "✦";
+  color: #ffffff;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Social links section */
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.social-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  background: var(--card);
+  border: 1px solid var(--ring-weak);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.social-item:hover {
+  background: var(--card-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.social-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.instagram .social-icon {
+  background: linear-gradient(135deg, #E4405F, #C13584, #833AB4);
+  color: white;
+}
+
+.telegram .social-icon {
+  background: linear-gradient(135deg, #0088cc, #006699);
+  color: white;
+}
+
+.website .social-icon {
+  background: linear-gradient(135deg, var(--ring), #cccccc);
+  color: #000000;
+}
+
+.social-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.social-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.social-handle {
+  font-size: 14px;
+  color: var(--muted);
+}

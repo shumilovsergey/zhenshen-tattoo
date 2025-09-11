@@ -1,0 +1,158 @@
+/* Portfolio page specific styles */
+.portfolio-page {
+  background: var(--bg);
+  padding: 0;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  padding: 24px 16px;
+}
+
+.portfolio-item {
+  aspect-ratio: 1;
+  background: var(--card);
+  border: 1px solid var(--ring-weak);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.portfolio-item:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow);
+}
+
+.portfolio-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.portfolio-item:hover img {
+  transform: scale(1.05);
+}
+
+.portfolio-item-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  padding: 16px;
+  color: white;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.portfolio-item:hover .portfolio-item-overlay {
+  transform: translateY(0);
+}
+
+.portfolio-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.portfolio-item-description {
+  font-size: 12px;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Lightbox */
+.lightbox {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  padding: 20px;
+}
+
+.lightbox.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.lightbox-info {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 0 0 8px 8px;
+  margin-top: 8px;
+}
+
+.lightbox-title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.lightbox-description {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}

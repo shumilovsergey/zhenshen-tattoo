@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Тату-мастер</title>
+  <meta name="theme-color" content="#000000" />
+  <style>
+    :root{
+      --bg:#0b0b0b;
+      --card:#121214;
+      --card-hover:#17181b;
+      --text:#f5f5f5;
+      --muted:#b7b7b7;
+      --ring:#ffffff;
+      --ring-weak:#2a2a2a;
+      --radius:16px;
+      --pad:18px;
+      --shadow: 0 8px 28px rgba(0,0,0,.45);
+    }
+
+    /* CSS reset (tiny) */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    .page{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Hero */
+    .hero{
+      position:relative;
+      /* aspect-ratio: 9 / 12;        */
+      max-height:60vh;
+      min-height:50vh;
+      overflow:hidden;
+      background: #000 url("./assets/profile.jpg") no-repeat;
+      background-size: cover;
+      background-position: center center;
+      border-bottom:1px solid var(--ring-weak);
+    }
+    /* @supports not (aspect-ratio: 9 / 12){
+      .hero{height:60vh;}
+    } */
+    .hero::after{
+      /* subtle top/bottom vignette to match the photo look */
+      content:"";
+      position:absolute; inset:0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0) 20%),
+        linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,0) 45%);
+      pointer-events:none;
+    }
+
+    /* Centered CTA */
+    .cta-wrap{
+      position:absolute; inset:0;
+      display:grid; place-items:end center;
+      padding:24px;
+    }
+    .cta{
+      width:100%;
+      max-width:640px;
+      font-size: clamp(24px, 6vw, 42px);
+      line-height:1;
+      letter-spacing:1px;
+      padding:24px 20px;
+      border-radius:16px;
+      color:#000;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+      border:3px solid #fff;
+      box-shadow: 
+        0 0 0 2px rgba(255,255,255,.15),
+        0 8px 32px rgba(255,255,255,.4),
+        0 0 40px rgba(255,255,255,.2);
+      text-align:center;
+      cursor:pointer;
+      transition: all .2s ease;
+      will-change: transform;
+      position:relative;
+      overflow:hidden;
+      font-weight: 700;
+      text-transform: uppercase;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+      from {
+        box-shadow: 
+          0 0 0 2px rgba(255,255,255,.15),
+          0 8px 32px rgba(255,255,255,.4),
+          0 0 40px rgba(255,255,255,.2);
+      }
+      to {
+        box-shadow: 
+          0 0 0 2px rgba(255,255,255,.3),
+          0 8px 32px rgba(255,255,255,.6),
+          0 0 60px rgba(255,255,255,.4);
+      }
+    }
+    .cta:active{ transform: scale(.985); }
+    .cta:focus-visible{
+      outline:none;
+      box-shadow:
+        0 0 0 2px #000,
+        0 0 0 4px #fff;
+    }
+
+    /* Branding section */
+    .branding{
+      text-align: center;
+      padding: 20px 16px 16px;
+      background: var(--bg);
+    }
+    .brand-name{
+      font-size: clamp(28px, 7vw, 48px);
+      font-weight: 200;
+      color: #ffffff;
+      margin: 0 0 4px 0;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .brand-subtitle{
+      font-size: clamp(14px, 3.5vw, 18px);
+      color: #ffffff;
+      margin: 0;
+      opacity: 0.9;
+      letter-spacing: 3px;
+      text-transform: lowercase;
+      font-weight: 300;
+    }
+
+    /* Content section */
+    .content{
+      width:100%;
+      max-width:760px;
+      margin: 8px auto 32px;
+      padding: 0 16px 24px;
+    }
+    .list{
+      display:flex; flex-direction:column; gap:14px;
+    }
+
+    .item{
+      display:flex; align-items:center; gap:14px;
+      width:100%;
+      padding: var(--pad);
+      border-radius: var(--radius);
+      background: var(--card);
+      color:var(--text);
+      border:1px solid var(--ring-weak);
+      box-shadow: var(--shadow);
+      text-decoration:none;
+      cursor:pointer;
+      transition: background-color .2s ease, transform .06s ease, border-color .2s ease;
+      position:relative; overflow:hidden;
+    }
+    .item:hover{ background: var(--card-hover); }
+    .item:active{ transform: scale(.995); }
+    .item:focus-visible{
+      outline:none;
+      border-color:#fff;
+      box-shadow:
+        0 0 0 2px #000,
+        0 0 0 4px #fff;
+    }
+
+    .icon{
+      width:38px; height:38px;
+      display:grid; place-items:center;
+      border-radius:12px;
+      background:#0f0f10;
+      border:1px solid var(--ring-weak);
+      font-size:20px;
+      flex: 0 0 38px;
+      user-select:none;
+    }
+    .label{
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+
+    /* Footer spacing for iPhone safe areas */
+    .spacer{ height: max(12px, env(safe-area-inset-bottom)); }
+
+    /* Simple ripple (ink) effect using CSS var driven by JS */
+    .ripple{
+      position:absolute;
+      border-radius:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      background: radial-gradient(circle, rgba(255,255,255,.28) 0%, rgba(255,255,255,.12) 45%, rgba(255,255,255,0) 70%);
+      width:12px; height:12px;
+      animation:ripple .55s ease-out forwards;
+    }
+    @keyframes ripple{
+      from{ opacity:.9; width:12px; height:12px; }
+      to{ opacity:0; width:420px; height:420px; }
+    }
+
+    /* Light haptics for large screens (optional hover) */
+    @media (hover:hover) and (pointer:fine){
+      .cta:hover{ 
+        background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+        transform: scale(1.02);
+        box-shadow: 
+          0 0 0 2px rgba(255,255,255,.3),
+          0 12px 40px rgba(255,255,255,.6),
+          0 0 80px rgba(255,255,255,.5);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <!-- HERO -->
+    <header class="hero" role="img" aria-label="Тату-мастер за работой">
+      <div class="cta-wrap">
+        <button class="cta" id="bookBtn" aria-label="Записаться на сеанс">Записаться</button>
+      </div>
+    </header>
+
+    <!-- BRANDING -->
+    <section class="branding">
+      <h1 class="brand-name">ЖеньШень</h1>
+      <p class="brand-subtitle">tattoo</p>
+    </section>
+
+    <!-- LIST -->
+    <section class="content" aria-labelledby="menuTitle">
+      <h2 id="menuTitle" style="position:absolute;left:-9999px;">Навигация</h2>
+      <nav class="list">
+        <a class="item" href="#about" data-name="Обо мне">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Обо мне</div>
+        </a>
+
+        <a class="item" href="#portfolio" data-name="Портфолио">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Портфолио</div>
+        </a>
+
+
+        <a class="item" href="#faq" data-name="Вопросы и ответы">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Вопросы и ответы</div>
+        </a>
+
+      <div class="spacer" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script>
+    // Minimal JS: ripple effect + demo actions
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function addRipple(e){
+      if(prefersReduced) return;
+      const target = e.currentTarget;
+      const rect = target.getBoundingClientRect();
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      r.style.left = (e.clientX - rect.left) + 'px';
+      r.style.top  = (e.clientY - rect.top) + 'px';
+      target.appendChild(r);
+      r.addEventListener('animationend', ()=> r.remove(), {once:true});
+    }
+
+    // Attach ripple to interactive elements
+    document.querySelectorAll('.item, .cta').forEach(el=>{
+      el.addEventListener('click', addRipple);
+      el.addEventListener('touchstart', (e)=>{
+        if(!e.touches?.[0]) return;
+        const t = e.touches[0];
+        addRipple({ currentTarget: el, clientX: t.clientX, clientY: t.clientY });
+      }, {passive:true});
+    });
+
+    // Demo handlers (replace with your routing or links)
+    document.getElementById('bookBtn').addEventListener('click', ()=>{
+      // Example: open messenger/phone or scroll to contacts
+      // window.location.href = "https://t.me/your_username";
+      const el = document.querySelector('#contacts') || document.querySelector('.item:last-child');
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+
+    document.querySelectorAll('.item').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        // Replace with real navigation or router
+        e.preventDefault();
+        const name = a.dataset.name || 'раздел';
+        // Simple toast
+        showToast(`Открыть: ${name}`);
+      });
+    });
+
+    function showToast(text){
+      let toast = document.getElementById('toast');
+      if(!toast){
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        Object.assign(toast.style, {
+          position:'fixed', left:'50%', bottom:'24px', transform:'translateX(-50%)',
+          background:'rgba(255,255,255,.06)', color:'#fff',
+          border:'1px solid #2a2a2a', padding:'12px 16px', borderRadius:'12px',
+          boxShadow:'0 8px 28px rgba(0,0,0,.5)', backdropFilter:'blur(8px)',
+          fontSize:'14px', zIndex:999
+        });
+        document.body.appendChild(toast);
+      }
+      toast.textContent = text;
+      toast.style.opacity = '1';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.opacity = '0', 1200);
+    }
+  </script>
+</body>
+</html>

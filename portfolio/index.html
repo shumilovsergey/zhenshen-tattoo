@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Портфолио - ЖеньШень Tattoo</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page portfolio-page">
+    <header class="section-header">
+      <button class="back-btn" onclick="goBack()">← Назад</button>
+      <h1 class="section-title">Портфолио</h1>
+    </header>
+    
+    <section class="content-section">
+      <div class="portfolio-grid" id="portfolioGrid">
+        <!-- Portfolio items will be loaded here -->
+      </div>
+      
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🎨</div>
+        <h3>Портфолио готовится</h3>
+        <p>Скоро здесь появятся работы мастера</p>
+      </div>
+    </section>
+    
+    <!-- Lightbox for viewing images -->
+    <div class="lightbox" id="lightbox">
+      <div class="lightbox-content">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img class="lightbox-image" id="lightboxImage" alt="Татуировка">
+        <div class="lightbox-info">
+          <h3 class="lightbox-title" id="lightboxTitle"></h3>
+          <p class="lightbox-description" id="lightboxDescription"></p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="spacer" aria-hidden="true"></div>
+  </main>
+
+  <script src="../js/app.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
