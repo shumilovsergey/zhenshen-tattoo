@@ -1,1847 +1,335 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photographer's Portfolio - Two Layer Hex</title>
-    <style>
-        :root {
-            --bg-color: linear-gradient(135deg, #0f0f0f, #1a1a1a);
-            --mosaic-tile-size: 120px;
-            --viewfinder-width: 300px;
-            --viewfinder-height: 500px;
-            --mosaic-opacity: 0.65;
-            --viewfinder-glow: rgba(255, 255, 255, 0.6);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-color);
-            color: white;
-            overflow: hidden;
-            height: 100vh;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        #container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            cursor: grab;
-        }
-
-        #container.dragging {
-            cursor: grabbing;
-        }
-
-        /* Background Mosaic Layer */
-        #mosaic-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            will-change: transform;
-        }
-
-        #mosaic-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: var(--mosaic-opacity);
-            filter: blur(0.5px);
-        }
-
-        /* Vignette overlay */
-        #mosaic-layer::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(
-                ellipse at center,
-                transparent 30%,
-                rgba(0, 0, 0, 0.05) 60%,
-                rgba(0, 0, 0, 0.15) 85%,
-                rgba(0, 0, 0, 0.25) 100%
-            );
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        /* Foreground Viewfinder Layer */
-        #viewfinder-layer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: var(--viewfinder-width);
-            height: var(--viewfinder-height);
-            transform: translate(-50%, -50%);
-            z-index: 10;
-        }
-
-        #viewfinder {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background: rgba(0, 0, 0, 0.02);
-            overflow: hidden;
-            
-            /* Interesting vertical shape - rounded rectangle with curved sides */
-            border-radius: 40px 40px 60px 60px;
-            
-            /* Enhanced glow effects */
-            box-shadow: 
-                0 0 0 5px var(--viewfinder-glow),
-                0 0 0 8px rgba(255, 255, 255, 0.3),
-                0 0 0 12px rgba(255, 255, 255, 0.15),
-                0 0 80px rgba(255, 255, 255, 0.2),
-                0 0 160px rgba(255, 255, 255, 0.1);
-        }
-
-        #viewfinder::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            background: linear-gradient(45deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.1) 25%, 
-                transparent 50%, 
-                rgba(255, 255, 255, 0.15) 75%, 
-                transparent 100%);
-            border-radius: 40px 40px 60px 60px;
-            z-index: -1;
-            animation: rotate 25s linear infinite;
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        #viewfinder-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 40px 40px 60px 60px;
-            transition: opacity 0.8s ease;
-        }
-
-        #viewfinder-placeholder {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            opacity: 0;
-        }
-
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        /* UI Elements */
-        #home-button {
-            position: absolute;
-            bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
-            left: calc(env(safe-area-inset-left, 0px) + 40px);
-            width: 60px;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.5s ease;
-            z-index: 100;
-        }
-
-        #home-button:hover {
-            background: rgba(0, 0, 0, 0.9);
-            border-color: rgba(255, 255, 255, 0.4);
-            transform: scale(1.05);
-        }
-
-        #home-button:active {
-            transform: scale(0.95);
-        }
-
-        #home-button svg {
-            width: 24px;
-            height: 24px;
-            fill: rgba(255, 255, 255, 0.9);
-            transition: fill 0.5s ease;
-        }
-
-        #home-button:hover svg {
-            fill: rgba(255, 255, 255, 1);
-        }
-
-        #info-overlay {
-            position: absolute;
-            bottom: env(safe-area-inset-bottom, 30px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            padding: 20px 24px;
-            border-radius: 16px;
-            max-width: 320px;
-            opacity: 0;
-            transition: opacity 0.6s ease, transform 0.6s ease;
-            z-index: 100;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            transform: translateX(-50%) translateY(20px);
-        }
-
-        #info-overlay.visible {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-
-
-        /* Avatar Profile Overlay - sits on top of viewfinder */
-        #avatar-profile-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: var(--viewfinder-width);
-            height: var(--viewfinder-height);
-            z-index: 200; /* Above viewfinder frame */
-            pointer-events: none; /* Default: allow gestures to pass through */
-            
-            /* Match viewfinder shape for perfect alignment */
-            border-radius: 40px 40px 60px 60px;
-            overflow: hidden;
-            
-            /* Initial state: visible with smooth transitions */
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-            transition: opacity 500ms ease-out, transform 500ms ease-out;
-        }
-
-        /* Hide state for browsing */
-        #avatar-profile-overlay[data-state="Browsing"] {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.98);
-            pointer-events: none;
-        }
-
-        /* Animate back in when returning home */
-        #avatar-profile-overlay[data-state="ReturningHome"] {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        #avatar-image-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        #avatar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-        }
-
-        #avatar-bottom-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 30%);
-            backdrop-filter: blur(15px);
-            padding: 20px 20px 20px 20px;
-            text-align: center;
-            pointer-events: auto; /* Enable interactions for controls */
-        }
-
-        #avatar-social-icons {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .avatar-social-icon {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-decoration: none;
-            transition: all 0.6s ease;
-            cursor: pointer;
-            z-index: 10;
-            position: relative;
-            pointer-events: auto;
-            backdrop-filter: blur(15px);
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            gap: 8px;
-        }
-
-        .avatar-social-icon:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
-        }
-
-        .avatar-social-icon svg {
-            width: 16px;
-            height: 16px;
-            fill: currentColor;
-            flex-shrink: 0;
-        }
-
-        #avatar-booking-button {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: #1a1a1a;
-            padding: 16px 32px;
-            border-radius: 24px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.6s ease;
-            backdrop-filter: blur(20px);
-            width: 100%;
-            max-width: 240px;
-            z-index: 10;
-            position: relative;
-            pointer-events: auto;
-            letter-spacing: 0.02em;
-        }
-
-        #avatar-booking-button:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(255, 255, 255, 0.3);
-        }
-
-        #avatar-booking-button:active {
-            transform: translateY(0);
-        }
-
-        #social-icons {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .social-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-decoration: none;
-            transition: all 0.5s ease;
-            cursor: pointer;
-            z-index: 10;
-            position: relative;
-        }
-
-        .social-icon:hover {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-2px) scale(1.05);
-        }
-
-        .social-icon svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        #booking-button {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.5s ease;
-            box-shadow: 0 4px 15px rgba(238, 90, 90, 0.3);
-            width: 100%;
-            max-width: 200px;
-            z-index: 10;
-            position: relative;
-        }
-
-        #booking-button:hover {
-            background: linear-gradient(135deg, #ee5a5a, #dd4444);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(238, 90, 90, 0.4);
-        }
-
-        #booking-button:active {
-            transform: translateY(0);
-        }
-
-        #info-overlay h3 {
-            margin-bottom: 8px;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        #info-overlay p {
-            font-size: 13px;
-            line-height: 1.4;
-            margin-bottom: 12px;
-            opacity: 0.9;
-        }
-
-        .contact-links {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 12px;
-        }
-
-        .contact-links a {
-            color: #fff;
-            text-decoration: none;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            font-size: 12px;
-            transition: all 0.5s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .contact-links a:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 200;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 30px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 300;
-            backdrop-filter: blur(10px);
-        }
-
-        .lightbox.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .lightbox img {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.5s ease;
-        }
-
-        .lightbox-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-
-        /* @media (max-width: 768px) {
-            :root {
-                --mosaic-tile-size: 90px;
-                --viewfinder-width: 240px;
-                --viewfinder-height: 380px;
-            }
-            
-            #home-button {
-                width: 50px;
-                height: 50px;
-                bottom: calc(env(safe-area-inset-bottom, 0px) + 30px);
-                left: calc(env(safe-area-inset-left, 0px) + 30px);
-            }
-
-            #home-button svg {
-                width: 20px;
-                height: 20px;
-            }
-            
-            #avatar-overlay {
-                padding: 40px 20px 20px 20px;
-            }
-
-            #avatar-greeting {
-                font-size: 14px;
-                margin-bottom: 14px;
-            }
-
-            #social-icons {
-                gap: 10px;
-                margin-bottom: 14px;
-            }
-
-            .social-icon {
-                width: 36px;
-                height: 36px;
-            }
-
-            .social-icon svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            #booking-button {
-                font-size: 14px;
-                padding: 10px 20px;
-                max-width: 180px;
-            }
-            
-            #info-overlay {
-                max-width: 280px;
-                padding: 16px 20px;
-                bottom: env(safe-area-inset-bottom, 20px);
-            }
-            
-
-        } */
-
-        /* @media (max-width: 390px) {
-            :root {
-                --viewfinder-width: 220px;
-                --viewfinder-height: 350px;
-            }
-            
-            #avatar-overlay {
-                padding: 30px 16px 16px 16px;
-            }
-
-            #avatar-greeting {
-                font-size: 13px;
-                margin-bottom: 12px;
-            }
-
-            #social-icons {
-                gap: 8px;
-                margin-bottom: 12px;
-            }
-
-            .social-icon {
-                width: 32px;
-                height: 32px;
-            }
-
-            .social-icon svg {
-                width: 14px;
-                height: 14px;
-            }
-
-            #booking-button {
-                font-size: 13px;
-                padding: 9px 18px;
-                max-width: 160px;
-            }
-            
-
-        } */
-
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.1s !important;
-            }
-            
-            #viewfinder::before {
-                animation: none;
-            }
-        }
-
-        /* Screen reader only */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Тату-мастер</title>
+  <meta name="theme-color" content="#000000" />
+  <style>
+    :root{
+      --bg:#0b0b0b;
+      --card:#121214;
+      --card-hover:#17181b;
+      --text:#f5f5f5;
+      --muted:#b7b7b7;
+      --ring:#ffffff;
+      --ring-weak:#2a2a2a;
+      --radius:16px;
+      --pad:18px;
+      --shadow: 0 8px 28px rgba(0,0,0,.45);
+    }
+
+    /* CSS reset (tiny) */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    .page{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Hero */
+    .hero{
+      position:relative;
+      aspect-ratio: 9 / 12;          /* tall mobile crop */
+      max-height:64vh;
+      overflow:hidden;
+      background:#000 center/cover no-repeat url("./assets/profile.jpg");
+      border-bottom:1px solid var(--ring-weak);
+    }
+    @supports not (aspect-ratio: 9 / 12){
+      .hero{height:64vh;}
+    }
+    .hero::after{
+      /* subtle top/bottom vignette to match the photo look */
+      content:"";
+      position:absolute; inset:0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0) 20%),
+        linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,0) 45%);
+      pointer-events:none;
+    }
+
+    /* Centered CTA */
+    .cta-wrap{
+      position:absolute; inset:0;
+      display:grid; place-items:end center;
+      padding:24px;
+    }
+    .cta{
+      width:100%;
+      max-width:640px;
+      font-size: clamp(24px, 6vw, 42px);
+      line-height:1;
+      letter-spacing:1px;
+      padding:24px 20px;
+      border-radius:16px;
+      color:#000;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+      border:3px solid #fff;
+      box-shadow: 
+        0 0 0 2px rgba(255,255,255,.15),
+        0 8px 32px rgba(255,255,255,.4),
+        0 0 40px rgba(255,255,255,.2);
+      text-align:center;
+      cursor:pointer;
+      transition: all .2s ease;
+      will-change: transform;
+      position:relative;
+      overflow:hidden;
+      font-weight: 700;
+      text-transform: uppercase;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+      from {
+        box-shadow: 
+          0 0 0 2px rgba(255,255,255,.15),
+          0 8px 32px rgba(255,255,255,.4),
+          0 0 40px rgba(255,255,255,.2);
+      }
+      to {
+        box-shadow: 
+          0 0 0 2px rgba(255,255,255,.3),
+          0 8px 32px rgba(255,255,255,.6),
+          0 0 60px rgba(255,255,255,.4);
+      }
+    }
+    .cta:active{ transform: scale(.985); }
+    .cta:focus-visible{
+      outline:none;
+      box-shadow:
+        0 0 0 2px #000,
+        0 0 0 4px #fff;
+    }
+
+    /* Content section */
+    .content{
+      width:100%;
+      max-width:760px;
+      margin: 18px auto 32px;
+      padding: 0 16px 24px;
+    }
+    .list{
+      display:flex; flex-direction:column; gap:14px;
+    }
+
+    .item{
+      display:flex; align-items:center; gap:14px;
+      width:100%;
+      padding: var(--pad);
+      border-radius: var(--radius);
+      background: var(--card);
+      color:var(--text);
+      border:1px solid var(--ring-weak);
+      box-shadow: var(--shadow);
+      text-decoration:none;
+      cursor:pointer;
+      transition: background-color .2s ease, transform .06s ease, border-color .2s ease;
+      position:relative; overflow:hidden;
+    }
+    .item:hover{ background: var(--card-hover); }
+    .item:active{ transform: scale(.995); }
+    .item:focus-visible{
+      outline:none;
+      border-color:#fff;
+      box-shadow:
+        0 0 0 2px #000,
+        0 0 0 4px #fff;
+    }
+
+    .icon{
+      width:38px; height:38px;
+      display:grid; place-items:center;
+      border-radius:12px;
+      background:#0f0f10;
+      border:1px solid var(--ring-weak);
+      font-size:20px;
+      flex: 0 0 38px;
+      user-select:none;
+    }
+    .label{
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+
+    /* Footer spacing for iPhone safe areas */
+    .spacer{ height: max(12px, env(safe-area-inset-bottom)); }
+
+    /* Simple ripple (ink) effect using CSS var driven by JS */
+    .ripple{
+      position:absolute;
+      border-radius:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      background: radial-gradient(circle, rgba(255,255,255,.28) 0%, rgba(255,255,255,.12) 45%, rgba(255,255,255,0) 70%);
+      width:12px; height:12px;
+      animation:ripple .55s ease-out forwards;
+    }
+    @keyframes ripple{
+      from{ opacity:.9; width:12px; height:12px; }
+      to{ opacity:0; width:420px; height:420px; }
+    }
+
+    /* Light haptics for large screens (optional hover) */
+    @media (hover:hover) and (pointer:fine){
+      .cta:hover{ 
+        background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+        transform: scale(1.02);
+        box-shadow: 
+          0 0 0 2px rgba(255,255,255,.3),
+          0 12px 40px rgba(255,255,255,.6),
+          0 0 80px rgba(255,255,255,.5);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div id="container" tabindex="0" role="application" aria-label="Two-layer photo gallery">
-        <!-- Background Mosaic Layer -->
-        <div id="mosaic-layer">
-            <canvas id="mosaic-canvas"></canvas>
-        </div>
-        
-        <!-- Foreground Viewfinder Layer -->
-        <div id="viewfinder-layer">
-            <div id="viewfinder">
-                <img id="viewfinder-image" alt="Selected photo">
-                <div id="viewfinder-placeholder"></div>
-                
-            </div>
-        </div>
-        
-        <!-- Avatar Profile Overlay - sits on top of viewfinder -->
-        <div id="avatar-profile-overlay" data-state="ProfileVisible">
-            <div id="avatar-image-container">
-                <img id="avatar-image" src="avatar.png" alt="ЖенШень тату - Profile">
-            </div>
-            <div id="avatar-bottom-bar">
-                <div id="avatar-social-icons">
-                    <a href="https://t.me/zhenshen_tattoo" class="avatar-social-icon" target="_blank" aria-label="Telegram">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                        </svg>
-                        Telegram
-                    </a>
-                    <a href="?" class="avatar-social-icon" target="_blank" aria-label="Instagram">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.40s-.644-1.44-1.439-1.40z"/>
-                        </svg>
-                        Instagram
-                    </a>
-                </div>
-                <button id="avatar-booking-button" onclick="bookSession()">Записаться</button>
-            </div>
-        </div>
-        
-        <div id="loading">
-            <div class="loading-spinner"></div>
-            <div>Loading Portfolio...</div>
-        </div>
-        
-        <button id="home-button" onclick="goHome()" aria-label="Return to first photo">
-            <svg viewBox="0 0 24 24">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+  <main class="page">
+    <!-- HERO -->
+    <header class="hero" role="img" aria-label="Тату-мастер за работой">
+      <div class="cta-wrap">
+        <button class="cta" id="bookBtn" aria-label="Записаться на сеанс">Записаться</button>
+      </div>
+    </header>
+
+    <!-- LIST -->
+    <section class="content" aria-labelledby="menuTitle">
+      <h2 id="menuTitle" style="position:absolute;left:-9999px;">Навигация</h2>
+      <nav class="list">
+        <a class="item" href="#about" data-name="Обо мне">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
             </svg>
-        </button>
-        
-        
-        <div class="lightbox" id="lightbox">
-            <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-            <img id="lightbox-img" alt="Full size photo">
-        </div>
-        
-        <div class="sr-only" id="screen-reader-announce" aria-live="polite"></div>
-    </div>
+          </div>
+          <div class="label">Обо мне</div>
+        </a>
 
-    <script>
-        class TwoLayerHexGrid {
-            constructor() {
-                // Canvas setup
-                this.mosaicCanvas = document.getElementById('mosaic-canvas');
-                this.mosaicCtx = this.mosaicCanvas.getContext('2d');
-                this.container = document.getElementById('container');
-                this.mosaicLayer = document.getElementById('mosaic-layer');
-                this.viewfinderImage = document.getElementById('viewfinder-image');
-                this.viewfinderPlaceholder = document.getElementById('viewfinder-placeholder');
-                
-                // Avatar overlay state management
-                this.avatarOverlay = document.getElementById('avatar-profile-overlay');
-                this.avatarState = 'ProfileVisible'; // Initial state
-                this.hasUserInteracted = false;
-                
-                // Grid settings
-                this.mosaicTileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mosaic-tile-size'));
-                this.viewfinderWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--viewfinder-width'));
-                this.viewfinderHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--viewfinder-height'));
-                this.hexRadius = this.mosaicTileSize / 2;
-                this.hexHeight = this.hexRadius * Math.sqrt(3);
-                
-                // Positioning - mosaic layer moves, viewfinder stays centered
-                this.mosaicOffsetX = 0;
-                this.mosaicOffsetY = 0;
-                this.targetOffsetX = 0;
-                this.targetOffsetY = 0;
-                
-                // Current photo index (what's shown in viewfinder)
-                this.currentPhotoIndex = 0;
-                
-                // Viewport
-                this.viewportWidth = window.innerWidth;
-                this.viewportHeight = window.innerHeight;
-                
-                // Interaction state
-                this.isDragging = false;
-                this.lastPointerX = 0;
-                this.lastPointerY = 0;
-                this.velocityX = 0;
-                this.velocityY = 0;
-                this.isSnapping = false;
-                
-                // Photo data
-                this.photos = [];
-                this.loadedImages = new Map();
-                this.actualPhotoCount = 0; // Number of real photos
-                this.totalPhotos = 0; // For display
-                this.shuffledSequences = []; // Multiple shuffled sequences for variety
-                
-                // Performance
-                this.animationFrame = null;
-                this.lastFrameTime = 0;
-                this.updateThrottle = 0;
-                this.lastSnapProgress = 0;
-                
-                // Click navigation
-                this.clickTolerance = 10; // pixels of movement allowed for click detection
-                this.clickStartX = 0;
-                this.clickStartY = 0;
-                this.renderedTiles = []; // Track rendered tiles for click detection
-                
-                // Tile transition system
-                this.tileStates = new Map(); // Track tile animation states
-                this.transitionSpeed = 0.06; // How fast tiles fade in/out (slower for smoother feel)
-                this.overscanBuffer = 1.5; // Extra buffer for smooth transitions
-                this.maxTileStates = 200; // Limit tile states for performance
-                
-                this.init();
-            }
-            
-            async init() {
-                try {
-                    this.setupCanvas();
-                    this.generatePhotoUrls();
-                    this.setupEventListeners();
-                    
-                    // Start at strict home position (centered on avatar.png)
-                    this.mosaicOffsetX = this.homeMosaicOffsetX;
-                    this.mosaicOffsetY = this.homeMosaicOffsetY;
-                    
-                    this.updateFromHash();
-                    this.startRenderLoop();
-                    
-                    // Preload avatar overlay image to prevent flicker
-                    await this.preloadAvatarImage();
-                    
-                    // Load current photo (based on home position)
-                    this.loadCurrentPhoto();
-                    
-                    // Start preloading remaining images
-                    this.preloadImages(); // Don't await this
-                    
-                    // Hide loading after avatar overlay is loaded and displayed
-                    setTimeout(() => {
-                        const loading = document.getElementById('loading');
-                        if (loading) {
-                            loading.style.display = 'none';
-                        }
-                    }, 200); // Short delay since avatar overlay is preloaded
-                } catch (error) {
-                    console.error('Initialization failed:', error);
-                    // Hide loading even if there's an error
-                    const loading = document.getElementById('loading');
-                    if (loading) {
-                        loading.style.display = 'none';
-                    }
-                }
-            }
-            
-            setupCanvas() {
-                const dpr = window.devicePixelRatio || 1;
-                this.mosaicCanvas.width = this.viewportWidth * dpr;
-                this.mosaicCanvas.height = this.viewportHeight * dpr;
-                this.mosaicCanvas.style.width = `${this.viewportWidth}px`;
-                this.mosaicCanvas.style.height = `${this.viewportHeight}px`;
-                this.mosaicCtx.scale(dpr, dpr);
-            }
-            
-            generatePhotoUrls() {
-                // Avatar.png is now handled by overlay system, not included in mosaic
-                
-                // List of actual photos in assets folder
-                const assetPhotos = [
-                    '2025-08-27 23.21.33.jpg',
-                    '2025-08-27 23.21.41.jpg', 
-                    '2025-08-27 23.21.47.jpg',
-                    '2025-08-27 23.21.53.jpg',
-                    '2025-08-27 23.21.59.jpg',
-                    '2025-08-27 23.22.06.jpg',
-                    '2025-08-27 23.22.18.jpg',
-                    '2025-08-27 23.22.24.jpg',
-                    '2025-08-27 23.22.29.jpg',
-                    '2025-08-27 23.22.50.jpg'
-                ];
-                
-                // Create photo data from assets
-                assetPhotos.forEach((filename, index) => {
-                    this.photos.push({
-                        url: `assets/${filename}`,
-                        fallbackUrl: `assets/${filename}`,
-                        title: `Portrait ${index + 1}`,
-                        description: `Professional vertical portrait showcasing artistic composition and lighting techniques.`,
-                        loaded: false
-                    });
-                });
-                
-                this.actualPhotoCount = this.photos.length; // Keep track of actual photo count
-                this.totalPhotos = this.actualPhotoCount; // This will be used for infinite cycling
-                
-                // Define strict home state - always maps to avatar (index 0)
-                this.homeQ = 0;
-                this.homeR = 0;
-                this.homeMosaicOffsetX = 0;
-                this.homeMosaicOffsetY = 0;
-                
-                // Create shuffled indices for varied infinite scrolling
-                this.createShuffledIndices();
-            }
-            
-            createShuffledIndices() {
-                // Create multiple shuffled sequences to avoid repetitive patterns
-                const numSequences = 8;
-                this.shuffledSequences = [];
-                
-                for (let seq = 0; seq < numSequences; seq++) {
-                    const indices = Array.from({ length: this.actualPhotoCount }, (_, i) => i);
-                    
-                    // Fisher-Yates shuffle
-                    for (let i = indices.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [indices[i], indices[j]] = [indices[j], indices[i]];
-                    }
-                    
-                    this.shuffledSequences.push(indices);
-                }
-            }
-            
-            async preloadAvatarImage() {
-                // Preload the avatar overlay image to prevent flicker
-                return new Promise((resolve) => {
-                    const avatarImg = document.getElementById('avatar-image');
-                    if (avatarImg.complete) {
-                        resolve();
-                    } else {
-                        avatarImg.onload = () => resolve();
-                        avatarImg.onerror = () => resolve(); // Resolve even on error to prevent hanging
-                    }
-                });
-            }
+        <a class="item" href="#portfolio" data-name="Портфолио">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Портфолио</div>
+        </a>
 
-            async preloadImages() {
-                // Load all photos asynchronously since avatar.png is handled separately
-                for (let i = 0; i < this.actualPhotoCount; i++) {
-                    this.loadImage(i);
-                }
-            }
-            
-            async loadImage(index) {
-                if (this.loadedImages.has(index) || index >= this.actualPhotoCount) return;
-                
-                const photo = this.photos[index];
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                return new Promise((resolve) => {
-                    img.onload = async () => {
-                        try {
-                            await img.decode();
-                        } catch (e) {
-                            console.warn('Image decode failed:', e);
-                        }
-                        this.loadedImages.set(index, img);
-                        photo.loaded = true;
-                        
-                        // Update viewfinder if this is the current photo
-                        if (index === this.currentPhotoIndex) {
-                            this.updateViewfinderImage();
-                        }
-                        
-                        resolve();
-                    };
-                    
-                    img.onerror = () => {
-                        if (photo.fallbackUrl && img.src !== photo.fallbackUrl) {
-                            img.src = photo.fallbackUrl;
-                        } else {
-                            console.warn(`Failed to load image: ${photo.url}`);
-                            resolve();
-                        }
-                    };
-                    
-                    img.src = photo.url;
-                });
-            }
-            
-            // Hexagonal grid math
-            axialToPixel(q, r) {
-                const x = this.hexRadius * 1.5 * q;
-                const y = this.hexRadius * Math.sqrt(3) * (r + q / 2);
-                return { x, y };
-            }
-            
-            pixelToAxial(x, y) {
-                const q = (2/3) * x / this.hexRadius;
-                const r = (-1/3 * x + Math.sqrt(3)/3 * y) / this.hexRadius;
-                return this.roundHex(q, r);
-            }
-            
-            roundHex(q, r) {
-                const s = -q - r;
-                let rq = Math.round(q);
-                let rr = Math.round(r);
-                let rs = Math.round(s);
-                
-                const q_diff = Math.abs(rq - q);
-                const r_diff = Math.abs(rr - r);
-                const s_diff = Math.abs(rs - s);
-                
-                if (q_diff > r_diff && q_diff > s_diff) {
-                    rq = -rr - rs;
-                } else if (r_diff > s_diff) {
-                    rr = -rq - rs;
-                }
-                
-                return { q: rq, r: rr };
-            }
-            
-            getPhotoIndex(q, r) {
-                if (this.actualPhotoCount === 0) return 0;
-                
-                // Create a unique hash from hex coordinates
-                let hash = q * 374761393 + r * 668265263;
-                hash = ((hash % 2147483647) + 2147483647) % 2147483647; // Ensure positive
-                
-                // Use the hash to select a shuffled sequence and position within it
-                const sequenceIndex = hash % this.shuffledSequences.length;
-                const positionInSequence = Math.floor(hash / this.shuffledSequences.length) % this.actualPhotoCount;
-                
-                // Get the actual photo index from the selected shuffled sequence
-                const actualPhotoIndex = this.shuffledSequences[sequenceIndex][positionInSequence];
-                
-                return actualPhotoIndex;
-            }
-            
-            getCurrentHexFromOffset() {
-                // The center hex coordinate based on current mosaic offset
-                const centerHex = this.pixelToAxial(-this.mosaicOffsetX, -this.mosaicOffsetY);
-                return centerHex;
-            }
-            
-            render() {
-                // Clear mosaic canvas
-                this.mosaicCtx.clearRect(0, 0, this.viewportWidth, this.viewportHeight);
-                
-                // Clear rendered tiles array for click detection
-                this.renderedTiles = [];
-                
-                // Calculate which hexes to render with overscan buffer
-                const rings = 5; // Increased for smoother transitions
-                const centerHex = this.getCurrentHexFromOffset();
-                
-                // Update tile states and clean up old ones
-                this.updateTileStates(centerHex, rings);
-                
-                // Render mosaic tiles with transitions
-                for (let ring = 0; ring <= rings; ring++) {
-                    if (ring === 0) {
-                        // Center hex
-                        this.drawMosaicTileWithTransition(centerHex.q, centerHex.r);
-                    } else {
-                        // Ring around center
-                        for (let i = 0; i < 6 * ring; i++) {
-                            const hex = this.getHexInRing(centerHex.q, centerHex.r, ring, i);
-                            this.drawMosaicTileWithTransition(hex.q, hex.r);
-                        }
-                    }
-                }
-            }
-            
-            updateTileStates(centerHex, maxRings) {
-                const currentTiles = new Set();
-                
-                // Collect all tiles that should be visible
-                for (let ring = 0; ring <= maxRings; ring++) {
-                    if (ring === 0) {
-                        const key = `${centerHex.q},${centerHex.r}`;
-                        currentTiles.add(key);
-                    } else {
-                        for (let i = 0; i < 6 * ring; i++) {
-                            const hex = this.getHexInRing(centerHex.q, centerHex.r, ring, i);
-                            const key = `${hex.q},${hex.r}`;
-                            currentTiles.add(key);
-                        }
-                    }
-                }
-                
-                // Update existing tile states
-                for (const [key, state] of this.tileStates.entries()) {
-                    if (currentTiles.has(key)) {
-                        // Tile should be visible - fade in
-                        state.targetOpacity = 1.0;
-                        state.targetScale = 1.0;
-                    } else {
-                        // Tile should fade out
-                        state.targetOpacity = 0.0;
-                        state.targetScale = 0.96;
-                    }
-                    
-                    // Animate towards target
-                    const opacityDiff = state.targetOpacity - state.opacity;
-                    const scaleDiff = state.targetScale - state.scale;
-                    
-                    state.opacity += opacityDiff * this.transitionSpeed;
-                    state.scale += scaleDiff * this.transitionSpeed;
-                    
-                    // Remove tiles that have completely faded out
-                    if (state.opacity < 0.01 && state.targetOpacity === 0) {
-                        this.tileStates.delete(key);
-                    }
-                }
-                
-                // Add new tiles
-                for (const key of currentTiles) {
-                    if (!this.tileStates.has(key)) {
-                        this.tileStates.set(key, {
-                            opacity: 0.0,
-                            scale: 0.96,
-                            targetOpacity: 1.0,
-                            targetScale: 1.0
-                        });
-                    }
-                }
-                
-                // Performance: clean up excess tile states if we have too many
-                if (this.tileStates.size > this.maxTileStates) {
-                    const toDelete = [];
-                    for (const [key, state] of this.tileStates.entries()) {
-                        if (!currentTiles.has(key) && state.opacity < 0.1) {
-                            toDelete.push(key);
-                            if (toDelete.length > 20) break; // Don't delete too many at once
-                        }
-                    }
-                    toDelete.forEach(key => this.tileStates.delete(key));
-                }
-            }
-            
-            getHexInRing(centerQ, centerR, ring, index) {
-                // Get hex coordinates in a ring around center
-                const directions = [
-                    [1, 0], [1, -1], [0, -1], 
-                    [-1, 0], [-1, 1], [0, 1]
-                ];
-                
-                const sideLength = ring;
-                const side = Math.floor(index / sideLength);
-                const sideIndex = index % sideLength;
-                
-                const direction = directions[side];
-                const startCorner = [
-                    centerQ + directions[side][0] * ring,
-                    centerR + directions[side][1] * ring
-                ];
-                
-                const stepDirection = directions[(side + 2) % 6];
-                
-                return {
-                    q: startCorner[0] + stepDirection[0] * sideIndex,
-                    r: startCorner[1] + stepDirection[1] * sideIndex
-                };
-            }
-            
-            drawMosaicTileWithTransition(q, r) {
-                const pixel = this.axialToPixel(q, r);
-                const screenX = this.viewportWidth/2 + pixel.x + this.mosaicOffsetX;
-                const screenY = this.viewportHeight/2 + pixel.y + this.mosaicOffsetY;
-                
-                // Extended margin for smoother transitions
-                const margin = this.mosaicTileSize * this.overscanBuffer;
-                if (screenX < -margin || screenX > this.viewportWidth + margin ||
-                    screenY < -margin || screenY > this.viewportHeight + margin) {
-                    return;
-                }
-                
-                const photoIndex = this.getPhotoIndex(q, r);
-                const tileKey = `${q},${r}`;
-                const tileState = this.tileStates.get(tileKey);
-                
-                // Skip if tile is completely transparent
-                if (!tileState || tileState.opacity < 0.01) {
-                    return;
-                }
-                
-                // Store tile info for click detection (only if reasonably visible)
-                if (tileState.opacity > 0.3) {
-                    this.renderedTiles.push({
-                        q: q,
-                        r: r,
-                        screenX: screenX,
-                        screenY: screenY,
-                        photoIndex: photoIndex,
-                        radius: this.hexRadius * 0.92 * tileState.scale
-                    });
-                }
-                
-                // Load image if not loaded
-                if (!this.loadedImages.has(photoIndex)) {
-                    this.loadImage(photoIndex);
-                }
-                
-                const img = this.loadedImages.get(photoIndex);
-                if (!img) {
-                    this.drawMosaicPlaceholderWithTransition(screenX, screenY, tileState);
-                    return;
-                }
-                
-                this.drawMosaicHexWithTransition(screenX, screenY, img, tileState, q, r);
-            }
-            
-            drawMosaicHexWithTransition(screenX, screenY, img, tileState, q, r) {
-                this.mosaicCtx.save();
-                this.mosaicCtx.translate(screenX, screenY);
-                
-                // Apply transition effects
-                this.mosaicCtx.globalAlpha = tileState.opacity;
-                this.mosaicCtx.scale(tileState.scale, tileState.scale);
-                
-                // Calculate distance from center for edge vignette
-                const centerDistance = Math.sqrt(
-                    Math.pow(screenX - this.viewportWidth/2, 2) + 
-                    Math.pow(screenY - this.viewportHeight/2, 2)
-                );
-                const maxDistance = Math.sqrt(
-                    Math.pow(this.viewportWidth/2, 2) + 
-                    Math.pow(this.viewportHeight/2, 2)
-                );
-                const edgeRatio = Math.min(1, centerDistance / (maxDistance * 0.7)); // Start dimming at 70% to edge
-                const vignetteAlpha = Math.max(0.7, 1 - edgeRatio * 0.3); // Subtle dimming
-                
-                // Create hexagonal clipping path
-                this.mosaicCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    const x = Math.cos(angle) * this.hexRadius * 0.92;
-                    const y = Math.sin(angle) * this.hexRadius * 0.92;
-                    if (i === 0) {
-                        this.mosaicCtx.moveTo(x, y);
-                    } else {
-                        this.mosaicCtx.lineTo(x, y);
-                    }
-                }
-                this.mosaicCtx.closePath();
-                this.mosaicCtx.clip();
-                
-                // Draw image with center crop
-                const imgAspect = img.width / img.height;
-                const tileAspect = 1;
-                
-                let drawWidth, drawHeight, drawX, drawY;
-                
-                if (imgAspect > tileAspect) {
-                    drawHeight = this.mosaicTileSize;
-                    drawWidth = drawHeight * imgAspect;
-                    drawX = -(drawWidth - this.mosaicTileSize) / 2;
-                    drawY = -drawHeight / 2;
-                } else {
-                    drawWidth = this.mosaicTileSize;
-                    drawHeight = drawWidth / imgAspect;
-                    drawX = -drawWidth / 2;
-                    drawY = -(drawHeight - this.mosaicTileSize) / 2;
-                }
-                
-                // Apply vignette to image
-                this.mosaicCtx.globalAlpha *= vignetteAlpha;
-                this.mosaicCtx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-                
-                this.mosaicCtx.restore();
-            }
-            
-            drawMosaicPlaceholderWithTransition(screenX, screenY, tileState) {
-                this.mosaicCtx.save();
-                this.mosaicCtx.translate(screenX, screenY);
-                this.mosaicCtx.globalAlpha = tileState.opacity * 0.2;
-                this.mosaicCtx.scale(tileState.scale, tileState.scale);
-                
-                this.mosaicCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    const x = Math.cos(angle) * this.hexRadius * 0.92;
-                    const y = Math.sin(angle) * this.hexRadius * 0.92;
-                    if (i === 0) {
-                        this.mosaicCtx.moveTo(x, y);
-                    } else {
-                        this.mosaicCtx.lineTo(x, y);
-                    }
-                }
-                this.mosaicCtx.closePath();
-                this.mosaicCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                this.mosaicCtx.fill();
-                this.mosaicCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                this.mosaicCtx.stroke();
-                
-                this.mosaicCtx.restore();
-            }
-            
-            drawMosaicHex(screenX, screenY, img) {
-                this.mosaicCtx.save();
-                this.mosaicCtx.translate(screenX, screenY);
-                
-                // Create hexagonal clipping path
-                this.mosaicCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    const x = Math.cos(angle) * this.hexRadius * 0.92; // Small gap
-                    const y = Math.sin(angle) * this.hexRadius * 0.92;
-                    if (i === 0) {
-                        this.mosaicCtx.moveTo(x, y);
-                    } else {
-                        this.mosaicCtx.lineTo(x, y);
-                    }
-                }
-                this.mosaicCtx.closePath();
-                this.mosaicCtx.clip();
-                
-                // Draw image with center crop
-                const imgAspect = img.width / img.height;
-                const tileAspect = 1;
-                
-                let drawWidth, drawHeight, drawX, drawY;
-                
-                if (imgAspect > tileAspect) {
-                    drawHeight = this.mosaicTileSize;
-                    drawWidth = drawHeight * imgAspect;
-                    drawX = -(drawWidth - this.mosaicTileSize) / 2;
-                    drawY = -drawHeight / 2;
-                } else {
-                    drawWidth = this.mosaicTileSize;
-                    drawHeight = drawWidth / imgAspect;
-                    drawX = -drawWidth / 2;
-                    drawY = -(drawHeight - this.mosaicTileSize) / 2;
-                }
-                
-                this.mosaicCtx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-                this.mosaicCtx.restore();
-            }
-            
-            drawMosaicPlaceholder(screenX, screenY) {
-                this.mosaicCtx.save();
-                this.mosaicCtx.translate(screenX, screenY);
-                this.mosaicCtx.globalAlpha = 0.2;
-                
-                this.mosaicCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    const x = Math.cos(angle) * this.hexRadius * 0.92;
-                    const y = Math.sin(angle) * this.hexRadius * 0.92;
-                    if (i === 0) {
-                        this.mosaicCtx.moveTo(x, y);
-                    } else {
-                        this.mosaicCtx.lineTo(x, y);
-                    }
-                }
-                this.mosaicCtx.closePath();
-                this.mosaicCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                this.mosaicCtx.fill();
-                this.mosaicCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                this.mosaicCtx.lineWidth = 1;
-                this.mosaicCtx.stroke();
-                
-                this.mosaicCtx.restore();
-            }
-            
-            updateViewfinderImage() {
-                const img = this.loadedImages.get(this.currentPhotoIndex);
-                const photo = this.photos[this.currentPhotoIndex];
-                
-                if (img) {
-                    this.viewfinderImage.src = img.src;
-                    this.viewfinderImage.alt = photo.title;
-                    this.viewfinderImage.style.opacity = '1';
-                    this.viewfinderPlaceholder.style.opacity = '0';
-                } else {
-                    this.viewfinderImage.style.opacity = '0';
-                    this.viewfinderPlaceholder.style.opacity = '1';
-                }
-                
-                // Update info overlay
-                document.getElementById('photo-title').textContent = photo.title;
-                document.getElementById('photo-description').textContent = photo.description;
-            }
-            
-            updateCurrentPhotoFromPosition() {
-                const centerHex = this.getCurrentHexFromOffset();
-                const newPhotoIndex = this.getPhotoIndex(centerHex.q, centerHex.r);
-                
-                if (newPhotoIndex !== this.currentPhotoIndex) {
-                    this.currentPhotoIndex = newPhotoIndex;
-                    this.updateViewfinderImage();
-                    this.updateHash();
-                    this.announceToScreenReader();
-                    
-                    // Load this image if not loaded
-                    if (!this.loadedImages.has(this.currentPhotoIndex)) {
-                        this.loadImage(this.currentPhotoIndex);
-                    }
-                }
-            }
-            
-            // Avatar State Machine Implementation
-            setAvatarState(newState) {
-                if (this.avatarState === newState) return;
-                
-                this.avatarState = newState;
-                this.avatarOverlay.setAttribute('data-state', newState);
-                
-                console.log(`Avatar state changed to: ${newState}`);
-            }
-            
-            hideAvatarOnUserInteraction() {
-                // Hide avatar overlay on any interaction when it's visible
-                if (this.avatarState === 'ProfileVisible') {
-                    this.hasUserInteracted = true;
-                    this.setAvatarState('Browsing');
-                }
-            }
-            
-            showAvatarOnHome() {
-                this.setAvatarState('ReturningHome');
-                // After animation settles, set to ProfileVisible
-                setTimeout(() => {
-                    if (this.avatarState === 'ReturningHome') {
-                        this.setAvatarState('ProfileVisible');
-                    }
-                }, 300);
-            }
-            
-            loadCurrentPhoto() {
-                this.updateCurrentPhotoFromPosition();
-                this.updateViewfinderImage();
-            }
-            
-            goToHome() {
-                // Return to strict home pose - always center position with avatar.png
-                this.targetOffsetX = this.homeMosaicOffsetX;
-                this.targetOffsetY = this.homeMosaicOffsetY;
-                
-                // Show avatar overlay when returning home
-                this.showAvatarOnHome();
-                
-                // Use same easing as regular snapping
-                this.animateSnap();
-            }
-            
-            setupEventListeners() {
-                // Pointer events on container
-                this.container.addEventListener('pointerdown', this.onPointerDown.bind(this));
-                this.container.addEventListener('pointermove', this.onPointerMove.bind(this));
-                this.container.addEventListener('pointerup', this.onPointerUp.bind(this));
-                this.container.addEventListener('pointercancel', this.onPointerUp.bind(this));
-                
-                // Click on viewfinder
-                document.getElementById('viewfinder').addEventListener('click', this.onViewfinderClick.bind(this));
-                
-                // Keyboard navigation
-                this.container.addEventListener('keydown', this.onKeyDown.bind(this));
-                
-                // Resize
-                window.addEventListener('resize', this.onResize.bind(this));
-                
-                // Hash change
-                window.addEventListener('hashchange', this.updateFromHash.bind(this));
-            }
-            
-            onPointerDown(e) {
-                // Ignore pointer events from interactive elements (buttons, links)
-                if (e.target.closest('a, button, [role="button"]')) {
-                    return; // Let the button handle the interaction
-                }
-                
-                // Hide avatar on user interaction
-                this.hideAvatarOnUserInteraction();
-                
-                this.isDragging = true;
-                this.isSnapping = false;
-                this.container.classList.add('dragging');
-                this.container.setPointerCapture(e.pointerId);
-                
-                this.lastPointerX = e.clientX;
-                this.lastPointerY = e.clientY;
-                this.clickStartX = e.clientX;
-                this.clickStartY = e.clientY;
-                this.velocityX = 0;
-                this.velocityY = 0;
-                
-                e.preventDefault();
-            }
-            
-            onPointerMove(e) {
-                if (!this.isDragging) return;
-                
-                const deltaX = e.clientX - this.lastPointerX;
-                const deltaY = e.clientY - this.lastPointerY;
-                
-                // Hide avatar overlay immediately on any movement
-                this.hideAvatarOnUserInteraction();
-                
-                // Ultra-smooth velocity tracking with optimized momentum
-                const momentumFactor = 0.9; // Higher for even smoother tracking
-                this.velocityX = this.velocityX * momentumFactor + deltaX * (1 - momentumFactor);
-                this.velocityY = this.velocityY * momentumFactor + deltaY * (1 - momentumFactor);
-                
-                // Direct 1:1 movement for completely fluid motion
-                this.mosaicOffsetX += deltaX;
-                this.mosaicOffsetY += deltaY;
-                
-                // Higher framerate for smoother viewfinder updates
-                if (!this.updateThrottle || Date.now() - this.updateThrottle > 16) { // 60fps for updates
-                    this.updateCurrentPhotoFromPosition();
-                    this.updateThrottle = Date.now();
-                }
-                
-                this.lastPointerX = e.clientX;
-                this.lastPointerY = e.clientY;
-                
-                e.preventDefault();
-            }
-            
-            onPointerUp(e) {
-                if (!this.isDragging) return;
-                
-                this.isDragging = false;
-                this.container.classList.remove('dragging');
-                this.container.releasePointerCapture(e.pointerId);
-                
-                // Check if this was a click (small movement) vs drag
-                const deltaX = e.clientX - this.clickStartX;
-                const deltaY = e.clientY - this.clickStartY;
-                const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                
-                if (totalMovement <= this.clickTolerance) {
-                    // This was a click - check if we clicked on a mosaic tile
-                    this.handleMosaicClick(e.clientX, e.clientY);
-                } else {
-                    // This was a drag - proceed with normal snap
-                    this.startSnap();
-                }
-                
-                e.preventDefault();
-            }
-            
-            handleMosaicClick(clickX, clickY) {
-                // Convert screen coordinates to canvas coordinates
-                const rect = this.mosaicCanvas.getBoundingClientRect();
-                const canvasX = clickX - rect.left;
-                const canvasY = clickY - rect.top;
-                
-                // Find which tile was clicked
-                let clickedTile = null;
-                let minDistance = Infinity;
-                
-                for (const tile of this.renderedTiles) {
-                    // Calculate distance from click point to tile center
-                    const dx = canvasX - tile.screenX;
-                    const dy = canvasY - tile.screenY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // Check if click is within the hexagonal tile
-                    if (distance <= tile.radius && distance < minDistance) {
-                        minDistance = distance;
-                        clickedTile = tile;
-                    }
-                }
-                
-                if (clickedTile) {
-                    // Animate to center the clicked tile
-                    this.animateToTile(clickedTile.q, clickedTile.r);
-                } else {
-                    // No tile clicked, proceed with normal snap
-                    this.startSnap();
-                }
-            }
-            
-            animateToTile(targetQ, targetR) {
-                // Calculate the target mosaic offset to center this tile
-                const targetPixel = this.axialToPixel(targetQ, targetR);
-                this.targetOffsetX = -targetPixel.x;
-                this.targetOffsetY = -targetPixel.y;
-                
-                // Use the existing snap animation but with different parameters for click navigation
-                this.animateClickNavigation();
-            }
-            
-            animateClickNavigation() {
-                this.isSnapping = true;
-                const startX = this.mosaicOffsetX;
-                const startY = this.mosaicOffsetY;
-                const startTime = performance.now();
-                
-                // Calculate distance for animation timing
-                const dx = this.targetOffsetX - startX;
-                const dy = this.targetOffsetY - startY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                // Smooth duration for click navigation
-                const baseDuration = 350;
-                const maxDuration = 650;
-                const duration = Math.min(maxDuration, baseDuration + distance * 0.5);
-                
-                const animate = (currentTime) => {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    
-                    // Use easeOutQuart for smooth, purposeful movement
-                    const easeProgress = 1 - Math.pow(1 - progress, 4);
-                    
-                    this.mosaicOffsetX = startX + dx * easeProgress;
-                    this.mosaicOffsetY = startY + dy * easeProgress;
-                    
-                    // Update current photo during animation
-                    if (Math.floor(progress * 8) !== Math.floor(this.lastSnapProgress * 8) || progress >= 1) {
-                        this.updateCurrentPhotoFromPosition();
-                        this.lastSnapProgress = progress;
-                    }
-                    
-                    if (progress >= 1) {
-                        this.mosaicOffsetX = this.targetOffsetX;
-                        this.mosaicOffsetY = this.targetOffsetY;
-                        this.isSnapping = false;
-                        this.updateCurrentPhotoFromPosition();
-                        this.lastSnapProgress = 0;
-                    } else {
-                        requestAnimationFrame(animate);
-                    }
-                };
-                
-                this.lastSnapProgress = 0;
-                requestAnimationFrame(animate);
-            }
-            
-            startSnap() {
-                // Calculate inertia with much smoother velocity decay for fluid motion
-                const velocityDecay = 0.95; // Higher for more natural inertia
-                const velocityMagnitude = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-                const inertiaMultiplier = Math.min(8, Math.max(2, velocityMagnitude / 12)); // Enhanced responsiveness
-                const inertiaX = this.velocityX * inertiaMultiplier * velocityDecay;
-                const inertiaY = this.velocityY * inertiaMultiplier * velocityDecay;
-                
-                // Project where we'd end up with inertia
-                const projectedX = this.mosaicOffsetX + inertiaX;
-                const projectedY = this.mosaicOffsetY + inertiaY;
-                
-                // Find the hex that would be closest to center with this projection
-                const targetHex = this.pixelToAxial(-projectedX, -projectedY);
-                
-                // Get multiple candidate positions (center and neighbors) for more natural snapping
-                const candidates = [
-                    targetHex,
-                    { q: targetHex.q + 1, r: targetHex.r },
-                    { q: targetHex.q - 1, r: targetHex.r },
-                    { q: targetHex.q, r: targetHex.r + 1 },
-                    { q: targetHex.q, r: targetHex.r - 1 },
-                    { q: targetHex.q + 1, r: targetHex.r - 1 },
-                    { q: targetHex.q - 1, r: targetHex.r + 1 }
-                ];
-                
-                // Find the best candidate based on distance and velocity direction
-                let bestHex = targetHex;
-                let bestScore = Infinity;
-                
-                for (const candidate of candidates) {
-                    const candidatePixel = this.axialToPixel(candidate.q, candidate.r);
-                    const candidateOffsetX = -candidatePixel.x;
-                    const candidateOffsetY = -candidatePixel.y;
-                    
-                    // Distance from current position
-                    const dx = candidateOffsetX - this.mosaicOffsetX;
-                    const dy = candidateOffsetY - this.mosaicOffsetY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // Velocity alignment (favor direction of movement)
-                    const velocityMag = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-                    let velocityAlignment = 0;
-                    if (velocityMag > 5) { // Only consider velocity if it's significant
-                        const velocityDot = (dx * this.velocityX + dy * this.velocityY) / (distance * velocityMag);
-                        velocityAlignment = Math.max(0, velocityDot) * velocityMag * 0.5;
-                    }
-                    
-                    // Composite score (lower is better)
-                    const score = distance - velocityAlignment;
-                    
-                    if (score < bestScore) {
-                        bestScore = score;
-                        bestHex = candidate;
-                    }
-                }
-                
-                const targetPixel = this.axialToPixel(bestHex.q, bestHex.r);
-                this.targetOffsetX = -targetPixel.x;
-                this.targetOffsetY = -targetPixel.y;
-                
-                // Animate to target with dynamic duration based on distance
-                this.animateSnap();
-            }
-            
-            animateSnap() {
-                this.isSnapping = true;
-                const startX = this.mosaicOffsetX;
-                const startY = this.mosaicOffsetY;
-                const startTime = performance.now();
-                
-                // Calculate distance for dynamic duration
-                const dx = this.targetOffsetX - startX;
-                const dy = this.targetOffsetY - startY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                // Ultra-smooth dynamic duration
-                const baseDuration = 180;
-                const maxDuration = 400;
-                const duration = Math.min(maxDuration, baseDuration + distance * 0.5);
-                
-                const animate = (currentTime) => {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    
-                    // Ultra-smooth easeOutQuart for most natural feel
-                    const easeProgress = 1 - Math.pow(1 - progress, 4);
-                    
-                    this.mosaicOffsetX = startX + dx * easeProgress;
-                    this.mosaicOffsetY = startY + dy * easeProgress;
-                    
-                    // Update current photo less frequently during animation
-                    if (Math.floor(progress * 8) !== Math.floor(this.lastSnapProgress * 8) || progress >= 1) {
-                        this.updateCurrentPhotoFromPosition();
-                        this.lastSnapProgress = progress;
-                    }
-                    
-                    if (progress >= 1) {
-                        this.mosaicOffsetX = this.targetOffsetX;
-                        this.mosaicOffsetY = this.targetOffsetY;
-                        this.isSnapping = false;
-                        this.updateCurrentPhotoFromPosition();
-                        this.lastSnapProgress = 0;
-                    } else {
-                        requestAnimationFrame(animate);
-                    }
-                };
-                
-                this.lastSnapProgress = 0;
-                requestAnimationFrame(animate);
-            }
-            
-            onViewfinderClick(e) {
-                if (this.isDragging) return;
-                
-                // Toggle info overlay
-                document.getElementById('info-overlay').classList.toggle('visible');
-                
-                e.stopPropagation();
-            }
-            
-            onKeyDown(e) {
-                // Hide avatar on user interaction
-                this.hideAvatarOnUserInteraction();
-                
-                const currentHex = this.getCurrentHexFromOffset();
-                let targetQ = currentHex.q;
-                let targetR = currentHex.r;
-                
-                switch (e.code) {
-                    case 'ArrowUp':
-                        targetR -= 1;
-                        break;
-                    case 'ArrowDown':
-                        targetR += 1;
-                        break;
-                    case 'ArrowLeft':
-                        targetQ -= 1;
-                        break;
-                    case 'ArrowRight':
-                        targetQ += 1;
-                        break;
-                    case 'Enter':
-                    case 'Space':
-                        openLightbox();
-                        return;
-                    default:
-                        return;
-                }
-                
-                e.preventDefault();
-                
-                // Snap to target hex
-                const targetPixel = this.axialToPixel(targetQ, targetR);
-                this.targetOffsetX = -targetPixel.x;
-                this.targetOffsetY = -targetPixel.y;
-                this.animateSnap();
-            }
-            
-            // Removed updatePhotoCounter method as photo counter UI is removed
-            
-            updateHash() {
-                const newHash = `#p=${this.currentPhotoIndex}`;
-                if (window.location.hash !== newHash) {
-                    history.replaceState(null, '', newHash);
-                }
-            }
-            
-            updateFromHash() {
-                const hash = window.location.hash;
-                const match = hash.match(/#p=(\d+)/);
-                if (match) {
-                    const photoIndex = parseInt(match[1], 10);
-                    if (photoIndex >= 0 && photoIndex < this.actualPhotoCount) {
-                        this.currentPhotoIndex = photoIndex;
-                        this.updateViewfinderImage();
-                        // Note: Would need reverse lookup to position mosaic correctly
-                    }
-                }
-            }
-            
-            announceToScreenReader() {
-                const photo = this.photos[this.currentPhotoIndex];
-                const announce = document.getElementById('screen-reader-announce');
-                announce.textContent = `Photo: ${photo.title}. Navigate freely through infinite gallery.`;
-            }
-            
-            onResize() {
-                this.viewportWidth = window.innerWidth;
-                this.viewportHeight = window.innerHeight;
-                this.setupCanvas();
-                
-                // Update tile sizes for mobile
-                const newMosaicTileSize = window.innerWidth < 768 ? 90 : 120;
-                if (newMosaicTileSize !== this.mosaicTileSize) {
-                    this.mosaicTileSize = newMosaicTileSize;
-                    this.hexRadius = this.mosaicTileSize / 2;
-                    this.hexHeight = this.hexRadius * Math.sqrt(3);
-                }
-            }
-            
-            startRenderLoop() {
-                const render = (currentTime) => {
-                    // Always render for maximum smoothness, no frame limiting
-                    this.render();
-                    this.lastFrameTime = currentTime;
-                    this.animationFrame = requestAnimationFrame(render);
-                };
-                render(0);
-            }
-        }
-        
-        // Global functions for lightbox and home button
-        function openLightbox() {
-            const grid = window.hexGrid;
-            if (!grid) return;
-            
-            const img = grid.loadedImages.get(grid.currentPhotoIndex);
-            if (!img) return;
-            
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightbox-img');
-            
-            lightboxImg.src = img.src;
-            lightboxImg.alt = grid.photos[grid.currentPhotoIndex].title;
-            lightbox.classList.add('active');
-        }
-        
-        function closeLightbox() {
-            document.getElementById('lightbox').classList.remove('active');
-        }
-        
-        function goHome() {
-            const grid = window.hexGrid;
-            if (!grid) return;
-            
-            grid.goToHome();
-        }
-        
-        function bookSession() {
-            // Open booking link or show booking form
-            window.open('https://t.me/zhenshen_tattoo', '_blank');
-        }
-        
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            window.hexGrid = new TwoLayerHexGrid();
+        <a class="item" href="#aftercare" data-name="Уход за татуировкой">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Уход за татуировкой</div>
+        </a>
+
+        <a class="item" href="#faq" data-name="Вопросы и ответы">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Вопросы и ответы</div>
+        </a>
+
+        <a class="item" href="#contacts" data-name="Контакты">
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor"/>
+              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="label">Контакты</div>
+        </a>
+      </nav>
+
+      <div class="spacer" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script>
+    // Minimal JS: ripple effect + demo actions
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function addRipple(e){
+      if(prefersReduced) return;
+      const target = e.currentTarget;
+      const rect = target.getBoundingClientRect();
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      r.style.left = (e.clientX - rect.left) + 'px';
+      r.style.top  = (e.clientY - rect.top) + 'px';
+      target.appendChild(r);
+      r.addEventListener('animationend', ()=> r.remove(), {once:true});
+    }
+
+    // Attach ripple to interactive elements
+    document.querySelectorAll('.item, .cta').forEach(el=>{
+      el.addEventListener('click', addRipple);
+      el.addEventListener('touchstart', (e)=>{
+        if(!e.touches?.[0]) return;
+        const t = e.touches[0];
+        addRipple({ currentTarget: el, clientX: t.clientX, clientY: t.clientY });
+      }, {passive:true});
+    });
+
+    // Demo handlers (replace with your routing or links)
+    document.getElementById('bookBtn').addEventListener('click', ()=>{
+      // Example: open messenger/phone or scroll to contacts
+      // window.location.href = "https://t.me/your_username";
+      const el = document.querySelector('#contacts') || document.querySelector('.item:last-child');
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+
+    document.querySelectorAll('.item').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        // Replace with real navigation or router
+        e.preventDefault();
+        const name = a.dataset.name || 'раздел';
+        // Simple toast
+        showToast(`Открыть: ${name}`);
+      });
+    });
+
+    function showToast(text){
+      let toast = document.getElementById('toast');
+      if(!toast){
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        Object.assign(toast.style, {
+          position:'fixed', left:'50%', bottom:'24px', transform:'translateX(-50%)',
+          background:'rgba(255,255,255,.06)', color:'#fff',
+          border:'1px solid #2a2a2a', padding:'12px 16px', borderRadius:'12px',
+          boxShadow:'0 8px 28px rgba(0,0,0,.5)', backdropFilter:'blur(8px)',
+          fontSize:'14px', zIndex:999
         });
-        
-        // Close lightbox on Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Escape') {
-                closeLightbox();
-            }
-        });
-    </script>
+        document.body.appendChild(toast);
+      }
+      toast.textContent = text;
+      toast.style.opacity = '1';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.opacity = '0', 1200);
+    }
+  </script>
 </body>
 </html>
