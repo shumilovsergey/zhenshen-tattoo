@@ -116,11 +116,35 @@
         0 0 0 4px #fff;
     }
 
+    /* Branding section */
+    .branding{
+      text-align: center;
+      padding: 20px 16px 16px;
+      background: var(--bg);
+    }
+    .brand-name{
+      font-size: clamp(28px, 7vw, 48px);
+      font-weight: 200;
+      color: #ffffff;
+      margin: 0 0 4px 0;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .brand-subtitle{
+      font-size: clamp(14px, 3.5vw, 18px);
+      color: #ffffff;
+      margin: 0;
+      opacity: 0.9;
+      letter-spacing: 3px;
+      text-transform: lowercase;
+      font-weight: 300;
+    }
+
     /* Content section */
     .content{
       width:100%;
       max-width:760px;
-      margin: 18px auto 32px;
+      margin: 8px auto 32px;
       padding: 0 16px 24px;
     }
     .list{
@@ -205,6 +229,12 @@
         <button class="cta" id="bookBtn" aria-label="Записаться на сеанс">Записаться</button>
       </div>
     </header>
+
+    <!-- BRANDING -->
+    <section class="branding">
+      <h1 class="brand-name">ЖеньШень</h1>
+      <p class="brand-subtitle">tattoo</p>
+    </section>
 
     <!-- LIST -->
     <section class="content" aria-labelledby="menuTitle">
