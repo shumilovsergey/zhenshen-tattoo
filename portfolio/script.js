@@ -86,34 +86,29 @@ function openViewer(startIndex) {
   const viewer = document.getElementById('fullscreenViewer');
   const container = document.getElementById('photoScrollContainer');
   
-  // Create all photo items for vertical scrolling
-  container.innerHTML = photos.map((photo, index) => `
-    <div class="photo-item" id="photo-${index}">
+  // Reorder photos: selected photo first, then rest, then photos before selected
+  const reorderedPhotos = [
+    ...photos.slice(startIndex), // From selected photo to end
+    ...photos.slice(0, startIndex) // From start to selected photo (these go to end)
+  ];
+  
+  // Create photo items with reordered photos
+  container.innerHTML = reorderedPhotos.map((photo, index) => `
+    <div class="photo-item">
       <img src="./photo/${photo}" alt="Татуировка ${index + 1}" loading="lazy">
     </div>
   `).join('');
   
-  // Start from top initially (no scroll visible during fade-in)
+  // Always start from top - selected photo is now first!
   container.scrollTop = 0;
   
   // Show viewer with fade effect
   viewer.style.display = 'block';
   document.body.style.overflow = 'hidden';
   
-  // Fade in viewer
+  // Fade in viewer - no need for additional scrolling!
   requestAnimationFrame(() => {
     viewer.classList.add('active');
-    
-    // After fade-in completes, smoothly scroll to selected photo
-    setTimeout(() => {
-      const targetPhoto = document.getElementById(`photo-${startIndex}`);
-      if (targetPhoto) {
-        targetPhoto.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }
-    }, 300); // Wait for fade-in to complete
   });
 }
 
