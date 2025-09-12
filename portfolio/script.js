@@ -53,30 +53,48 @@ function loadPortfolioGrid() {
 
 function openViewer(startIndex) {
   const viewer = document.getElementById('fullscreenViewer');
-  const container = document.getElementById('photoContainer');
+  const container = document.getElementById('photoScrollContainer');
   
-  // Create all photo slides
+  // Create all photo items for vertical scrolling
   container.innerHTML = photos.map((photo, index) => `
-    <div class="photo-slide">
+    <div class="photo-item" id="photo-${index}">
       <img src="./photo/${photo}" alt="Татуировка ${index + 1}" loading="lazy">
     </div>
   `).join('');
   
-  // Show viewer
-  viewer.classList.add('active');
+  // Start from top initially (no scroll visible during fade-in)
+  container.scrollTop = 0;
+  
+  // Show viewer with fade effect
+  viewer.style.display = 'block';
   document.body.style.overflow = 'hidden';
   
-  // Scroll to the clicked photo
-  const targetSlide = container.children[startIndex];
-  if (targetSlide) {
-    targetSlide.scrollIntoView({ behavior: 'smooth' });
-  }
+  // Fade in viewer
+  requestAnimationFrame(() => {
+    viewer.classList.add('active');
+    
+    // After fade-in completes, smoothly scroll to selected photo
+    setTimeout(() => {
+      const targetPhoto = document.getElementById(`photo-${startIndex}`);
+      if (targetPhoto) {
+        targetPhoto.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 300); // Wait for fade-in to complete
+  });
 }
 
 function closeViewer() {
   const viewer = document.getElementById('fullscreenViewer');
   viewer.classList.remove('active');
-  document.body.style.overflow = '';
+  
+  // Hide viewer after fade-out completes
+  setTimeout(() => {
+    viewer.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 300);
 }
 
 // Close viewer on escape key

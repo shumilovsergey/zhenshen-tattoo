@@ -92,7 +92,8 @@
 /* Restrictions grid */
 .restrictions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 16px;
   margin-top: 16px;
 }
