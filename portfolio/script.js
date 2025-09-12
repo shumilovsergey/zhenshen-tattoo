@@ -43,12 +43,43 @@ const photos = [
 
 function loadPortfolioGrid() {
   const grid = document.getElementById('portfolioGrid');
+  const loadingContainer = document.getElementById('loadingContainer');
   
+  // Create grid items
   grid.innerHTML = photos.map((photo, index) => `
     <div class="portfolio-item" onclick="openViewer(${index})">
-      <img src="./photo/${photo}" alt="Татуировка ${index + 1}" loading="lazy">
+      <img src="./photo/${photo}" alt="Татуировка ${index + 1}" loading="eager">
     </div>
   `).join('');
+  
+  // Wait for all images to load
+  const images = grid.querySelectorAll('img');
+  let loadedCount = 0;
+  const totalImages = images.length;
+  
+  // Function to check if all images are loaded
+  function checkAllLoaded() {
+    loadedCount++;
+    if (loadedCount === totalImages) {
+      // All images loaded, show grid and hide loading
+      setTimeout(() => {
+        loadingContainer.style.display = 'none';
+        grid.style.display = 'grid';
+      }, 500); // Small delay for smooth transition
+    }
+  }
+  
+  // Add load event listeners to all images
+  images.forEach(img => {
+    if (img.complete) {
+      // Image already loaded
+      checkAllLoaded();
+    } else {
+      // Wait for image to load
+      img.addEventListener('load', checkAllLoaded);
+      img.addEventListener('error', checkAllLoaded); // Count errors as loaded to avoid infinite loading
+    }
+  });
 }
 
 function openViewer(startIndex) {

@@ -165,8 +165,10 @@ body{
   overflow:hidden;
 }
 
-.item:hover{ background: var(--card-hover); }
-.item:active{ transform: scale(.995); }
+.item:active{ 
+  background: var(--card-hover);
+  transform: scale(.995); 
+}
 .item:focus-visible{
   outline:none;
   border-color:#fff;
@@ -220,9 +222,9 @@ body{
   align-items: center;
 }
 
-.back-btn:hover {
+.back-btn:active {
   background: var(--card-hover);
-  transform: translateY(-1px);
+  transform: scale(.95);
 }
 
 .section-title {

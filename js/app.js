@@ -26,7 +26,7 @@ document.querySelectorAll('.item, .cta').forEach(el=>{
 // Booking button handler
 document.getElementById('bookBtn').addEventListener('click', ()=>{
   // Open Telegram
-  window.open('https://t.me/zhenshen_tattoo', '_blank');
+  window.open('https://t.me/zhenshen14', '_blank');
 });
 
 // Menu items now use real navigation (no preventDefault)

@@ -19,7 +19,7 @@
   transition: all 0.3s ease;
 }
 
-.faq-item:hover {
+.faq-item:active {
   border-color: var(--ring);
 }
 
@@ -34,7 +34,7 @@
   user-select: none;
 }
 
-.faq-question:hover {
+.faq-question:active {
   background: var(--card-hover);
 }
 

@@ -8,7 +8,7 @@ function goBack() {
 }
 
 function contactMaster() {
-  window.open('https://t.me/zhenshen_tattoo', '_blank');
+  window.open('https://t.me/zhenshen14', '_blank');
 }
 
 // Initialize selfcare page
