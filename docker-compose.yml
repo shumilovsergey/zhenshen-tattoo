@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/cache:/var/cache/nginx
+    restart: unless-stopped
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    command: nginx -g 'daemon off;'
