@@ -4,79 +4,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a tattoo artist portfolio website (zhenshen-tattoo) - a single-page application serving as a business card in Russian ("сайт визитка"). The application features a hero image with booking CTA and navigation menu in a modern mobile-first design.
+This is a tattoo artist portfolio website (zhenshen-tattoo) - a multi-page application serving as a business card in Russian ("сайт визитка"). The application features a hero image with booking CTA and navigation menu, deployed using Docker and Nginx.
 
 ## Architecture
 
-### Core Structure
-- **Single-file architecture**: All HTML, CSS, and JavaScript contained in `index.html` (~277 lines)
-- **Static assets**: Images stored in `assets/` directory
+### Current Structure
+- **Multi-page architecture**: Main landing page (`index.html`) with separate section pages
+- **Static assets**: Images stored in `assets/` directory and section-specific folders
 - **No build system**: Pure HTML/CSS/JS without frameworks or build tools
-- **Self-contained**: Inline styles and scripts with no external dependencies
+- **Docker deployment**: Nginx-based containerized deployment with optimized caching
 
-### Current Implementation (index.html)
-- **Modern CSS**: CSS custom properties with dark theme variables
-- **Hero section**: Full-screen background image with overlay and centered CTA button
-- **Navigation**: Clean card-based menu items with icons and ripple effects
-- **Responsive design**: Mobile-first with `aspect-ratio` and viewport units
-- **Interactive elements**: Touch-friendly with ripple animations and hover states
+### Section Pages Structure
+- **Main page**: `index.html` with hero section and navigation
+- **About page**: `pages/about/` directory with own HTML/CSS/JS
+- **Portfolio page**: `pages/portfolio/` directory with image gallery
+- **FAQ page**: `pages/faq/` directory with Q&A content
+- **Self-care page**: `pages/selfcare/` directory with aftercare instructions
 
 ### Key Features
-- **CSS Variables**: Consistent theming with `--bg`, `--card`, `--text`, etc.
-- **Aspect ratio**: Hero image uses `9/12` aspect ratio for mobile optimization
-- **Ripple effects**: Touch interaction feedback with CSS animations
-- **Accessibility**: Proper ARIA labels, focus states, and semantic HTML
-- **Safe areas**: iPhone safe area support with `env(safe-area-inset-bottom)`
-
-### Legacy Files (Not Currently Used)
-- `main.js`: Previous SPA routing logic (277 lines)
-- `styles.css`: Separate stylesheet (389 lines) 
-- `pages/*.html`: Individual content pages (about, portfolio, care, faq, contacts)
+- **Responsive design**: Mobile-first approach across all pages
+- **Navigation**: Card-based menu items with icons linking to pages/ sections
+- **High-performance static serving**: Optimized nginx with aggressive caching
+- **Portfolio optimization**: Special caching and serving rules for gallery images
+- **Memory efficiency**: Tmpfs caching and optimized worker processes
 
 ## Development Workflow
 
 ### Common Commands
-- **View locally**: Open `index.html` in browser or use local server
-- **Deploy**: Commit and push to main branch (no build step required)
-- **Development**: Direct editing of `index.html`, no compilation needed
+- **Local development**: `docker-compose up` (serves on port 10001)
+- **Stop container**: `docker-compose down`
+- **View locally**: http://localhost:10001
+- **Rebuild**: `docker-compose up --build` (after nginx.conf changes)
 
 ### File Structure
 ```
-├── index.html           # Main application (all-in-one)
-├── assets/
-│   └── profile.jpg      # Hero background image
-├── main.js              # Legacy SPA logic (unused)
-├── styles.css           # Legacy styles (unused)
-├── pages/               # Legacy content pages (unused)
-└── template.png         # Design reference
+├── index.html                 # Main landing page with navigation
+├── docker-compose.yml         # Optimized Docker deployment
+├── nginx.conf                 # High-performance nginx configuration
+├── css/styles.css             # Main stylesheet
+├── js/app.js                  # Main JavaScript functionality
+├── assets/                    # Shared static assets
+└── pages/                     # All section pages
+    ├── about/                 # About section (HTML/CSS/JS)
+    ├── portfolio/             # Portfolio with image galleries
+    │   └── photo/             # Portfolio images (optimized caching)
+    ├── faq/                   # FAQ section
+    └── selfcare/              # Aftercare instructions
 ```
 
-### Current JavaScript Functionality
-- **Ripple effects**: Touch/click visual feedback animation
-- **Demo navigation**: Placeholder toast notifications for menu items
-- **Booking CTA**: Scroll-to-contacts placeholder (ready for Telegram integration)
-- **Accessibility**: Reduced motion preference detection
+## Docker Deployment
+
+### High-Performance Configuration
+- **Port**: Container serves on port 10001 (optimized for OS-level nginx proxy)
+- **Memory**: 256MB limit with tmpfs caching for maximum speed
+- **Workers**: Auto-scaling worker processes (up to 2048 connections each)
+- **File cache**: 10,000 files cached in memory for 60s with 2-use threshold
+
+### Static Asset Optimization
+- **Portfolio images**: 30-day cache with range request support for fast gallery browsing
+- **CSS/JS**: 1-year cache with immutable headers for versioned assets
+- **HTML**: 1-hour cache for dynamic content updates
+- **Fonts**: 1-year cache with CORS headers
+
+### Performance Features
+- **Tmpfs caching**: 100MB in-memory cache for nginx operations
+- **Sendfile**: Direct kernel-to-socket file transfers (zero-copy)
+- **TCP optimizations**: tcp_nopush, tcp_nodelay for minimal latency
+- **Gzip level 6**: Balanced compression for text assets
+- **Open file cache**: Aggressive file descriptor caching
+- **Connection pooling**: Keep-alive with 100 requests per connection
 
 ## Development Notes
 
 ### Making Changes
-- **All changes**: Edit `index.html` directly - it contains everything
-- **Styling**: Modify CSS within `<style>` tags around lines 8-167
-- **Functionality**: Edit JavaScript within `<script>` tags around lines 212-275
-- **Images**: Replace `assets/profile.jpg` or update background-image URL
+- **Main page**: Edit `index.html` and `css/styles.css`
+- **Section pages**: Located in `pages/` - each has own HTML/CSS/JS files
+- **Docker changes**: Container restart required for `nginx.conf` or `docker-compose.yml` changes
+- **Portfolio images**: Add to `pages/portfolio/photo/` for optimized delivery
 
-### Design System
-- **Color scheme**: Dark theme with subtle cards and white accents
-- **Typography**: System font stack with consistent sizing
-- **Spacing**: 18px base padding with 16px border radius
-- **Shadows**: Consistent `0 8px 28px rgba(0,0,0,.45)` shadow
+### Navigation System
+- **Main navigation**: Links from `index.html` to `pages/[section]/`
+- **Section structure**: Self-contained pages in `pages/` directory
+- **URL structure**: All content pages use `/pages/[section]/` format
 
-### Integration Points
-- **Telegram booking**: Replace line 241-243 with actual Telegram link
-- **Real navigation**: Replace toast demo (lines 249-253) with routing
-- **Content pages**: Current navigation shows placeholder toasts
-
-### Mobile Optimization
-- **Viewport**: Configured for mobile with `viewport-fit=cover`
-- **Touch targets**: 38px minimum touch targets with proper spacing
-- **Performance**: CSS animations use `will-change` and efficient transforms
+### Performance Considerations
+- **Portfolio images**: Automatically cached for 30 days with range request support
+- **Asset versioning**: CSS/JS changes may require cache-busting via filename changes
+- **Memory usage**: Container limited to 256MB - monitor for large image galleries
+- **Cache warming**: First visitor to portfolio may experience slight delay as cache populates
