@@ -40,9 +40,9 @@ body{
   height: clamp(320px, 72vw, 520px);
 }
 
-@supports (height: 60svh){
+@supports (height: 60vh){
   .hero{
-    height: 60svh;
+    height: 60vh;
   }
 }
 

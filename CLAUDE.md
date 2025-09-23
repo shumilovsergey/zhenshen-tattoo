@@ -39,17 +39,22 @@ This is a tattoo artist portfolio website (zhenshen-tattoo) - a multi-page appli
 ### File Structure
 ```
 ├── index.html                 # Main landing page with navigation
-├── docker-compose.yml         # Optimized Docker deployment
+├── docker-compose.yml         # Optimized Docker deployment configuration
 ├── nginx.conf                 # High-performance nginx configuration
-├── css/styles.css             # Main stylesheet
-├── js/app.js                  # Main JavaScript functionality
-├── assets/                    # Shared static assets
-└── pages/                     # All section pages
-    ├── about/                 # About section (HTML/CSS/JS)
+├── css/styles.css             # Main stylesheet for homepage
+├── js/app.js                  # Main JavaScript functionality for homepage
+├── assets/                    # Shared static assets (logo, banners, profile images)
+├── README.md                  # Performance documentation
+├── CNAME                      # Domain configuration for GitHub Pages
+└── pages/                     # All section pages (self-contained)
+    ├── about/                 # About section (index.html, styles.css, script.js)
     ├── portfolio/             # Portfolio with image galleries
-    │   └── photo/             # Portfolio images (optimized caching)
-    ├── faq/                   # FAQ section
-    └── selfcare/              # Aftercare instructions
+    │   ├── index.html         # Portfolio page
+    │   ├── styles.css         # Portfolio-specific styles
+    │   ├── script.js          # Portfolio gallery functionality
+    │   └── photo/             # Portfolio images (30+ high-res photos)
+    ├── faq/                   # FAQ section (index.html, styles.css, script.js)
+    └── selfcare/              # Aftercare instructions (index.html, styles.css, script.js)
 ```
 
 ## Docker Deployment
@@ -92,3 +97,21 @@ This is a tattoo artist portfolio website (zhenshen-tattoo) - a multi-page appli
 - **Asset versioning**: CSS/JS changes may require cache-busting via filename changes
 - **Memory usage**: Container limited to 256MB - monitor for large image galleries
 - **Cache warming**: First visitor to portfolio may experience slight delay as cache populates
+
+## Important Development Notes
+
+### Architecture Patterns
+- **Self-contained pages**: Each section in `pages/` has its own HTML, CSS, and JS files
+- **No build process**: Direct file editing - changes are immediately visible after container restart
+- **Static site**: No server-side processing, database, or dynamic content generation
+- **Russian language**: All content and UI text is in Russian for the target audience
+
+### Page Development
+- **Individual styling**: Each page has its own `styles.css` for section-specific styling
+- **Modular JavaScript**: Each page has its own `script.js` for page-specific functionality
+- **Consistent structure**: All pages follow the same directory pattern (index.html, styles.css, script.js)
+
+### Deployment Process
+- **GitHub Pages**: CNAME file configures custom domain (zhenshen-tattoo.ru)
+- **Docker for development**: Local development uses Docker with nginx optimization
+- **No CI/CD**: Direct deployment - changes pushed to main branch are live
