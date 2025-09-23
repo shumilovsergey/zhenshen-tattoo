@@ -1,27 +1,27 @@
 // Minimal JS: ripple effect + demo actions
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function addRipple(e){
-  if(prefersReduced) return;
-  const target = e.currentTarget;
-  const rect = target.getBoundingClientRect();
-  const r = document.createElement('span');
-  r.className = 'ripple';
-  r.style.left = (e.clientX - rect.left) + 'px';
-  r.style.top  = (e.clientY - rect.top) + 'px';
-  target.appendChild(r);
-  r.addEventListener('animationend', ()=> r.remove(), {once:true});
-}
+// function addRipple(e){
+//   if(prefersReduced) return;
+//   const target = e.currentTarget;
+//   const rect = target.getBoundingClientRect();
+//   const r = document.createElement('span');
+//   r.className = 'ripple';
+//   r.style.left = (e.clientX - rect.left) + 'px';
+//   r.style.top  = (e.clientY - rect.top) + 'px';
+//   target.appendChild(r);
+//   r.addEventListener('animationend', ()=> r.remove(), {once:true});
+// }
 
-// Attach ripple to interactive elements
-document.querySelectorAll('.item, .cta').forEach(el=>{
-  el.addEventListener('click', addRipple);
-  el.addEventListener('touchstart', (e)=>{
-    if(!e.touches?.[0]) return;
-    const t = e.touches[0];
-    addRipple({ currentTarget: el, clientX: t.clientX, clientY: t.clientY });
-  }, {passive:true});
-});
+// // Attach ripple to interactive elements
+// document.querySelectorAll('.item, .cta').forEach(el=>{
+//   el.addEventListener('click', addRipple);
+//   el.addEventListener('touchstart', (e)=>{
+//     if(!e.touches?.[0]) return;
+//     const t = e.touches[0];
+//     addRipple({ currentTarget: el, clientX: t.clientX, clientY: t.clientY });
+//   }, {passive:true});
+// });
 
 // Booking button handler
 document.getElementById('bookBtn').addEventListener('click', ()=>{
