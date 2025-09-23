@@ -32,13 +32,18 @@ body{
 /* Hero */
 .hero{
   position:relative;
-  max-height:60vh;
-  min-height:50vh;
   overflow:hidden;
   background: #000 url("../assets/profile.jpg") no-repeat;
   background-size: cover;
   background-position: center center;
   border-bottom:1px solid var(--ring-weak);
+  height: clamp(320px, 72vw, 520px);
+}
+
+@supports (height: 60svh){
+  .hero{
+    height: 60svh;
+  }
 }
 
 .hero::after{
